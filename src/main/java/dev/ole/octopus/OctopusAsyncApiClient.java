@@ -2,7 +2,7 @@ package dev.ole.octopus;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import dev.ole.octopus.client.ApiClient;
+import dev.ole.octopus.client.AsyncApiClient;
 import dev.ole.octopus.dto.ApiResponse;
 import dev.ole.octopus.dto.attribute.AttributeCreateRequest;
 import dev.ole.octopus.dto.attribute.AttributeQueryRequest;
@@ -17,22 +17,23 @@ import dev.ole.octopus.dto.stat.StatCreateRequest;
 import dev.ole.octopus.dto.stat.StatQueryRequest;
 import dev.ole.octopus.dto.stat.StatResponse;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
-public class OctopusApiClient implements ApiClient {
+public class OctopusAsyncApiClient implements AsyncApiClient {
 
     private final String baseUrl;
 
-    public OctopusApiClient(String baseUrl) {
+    public OctopusAsyncApiClient(String baseUrl) {
         this.baseUrl = baseUrl;
     }
 
+    @Override
     public String getBaseUrl() {
         return baseUrl;
     }
@@ -43,14 +44,11 @@ public class OctopusApiClient implements ApiClient {
     }
 
     @Override
-    public <T, S> T post(S request, URI route, Type type) {
+    public <T, S> CompletableFuture<T> postAsync(S request, URI route, Type type) {
         HttpRequest httpRequest = newRequest(request, route);
-
         try (HttpClient client = HttpClient.newHttpClient()) {
-            HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            return new Gson().fromJson(response.body(), type);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            CompletableFuture<HttpResponse<String>> response = client.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString());
+            return response.thenApply(body -> new Gson().fromJson(body.body(), type));
         }
     }
 
@@ -61,170 +59,168 @@ public class OctopusApiClient implements ApiClient {
     }
 
     @Override
-    public ApiResponse<AttributeResponse> createRoleAttribute(AttributeCreateRequest request) {
+    public CompletableFuture<ApiResponse<AttributeResponse>> createRoleAttributeAsync(AttributeCreateRequest request) {
         URI route = URI.create(getBaseUrl() + "/role/attribute/create");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, AttributeResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<Integer> deleteRoleAttributes(AttributeQueryRequest request) {
+    public CompletableFuture<ApiResponse<Integer>> deleteRoleAttributesAsync(AttributeQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/role/attribute/delete");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, Integer.class).getType();
-        return post(request, route, responseType);
-    }
+        return postAsync(request, route, responseType);    }
 
     @Override
-    public ApiResponse<List<AttributeResponse>> getRoleAttributes(AttributeQueryRequest request) {
+    public CompletableFuture<ApiResponse<List<AttributeResponse>>> getRoleAttributesAsync(AttributeQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/role/attribute/query");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, List.class, AttributeResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<PermissionResponse> createRolePermission(PermissionCreateRequest request) {
+    public CompletableFuture<ApiResponse<PermissionResponse>> createRolePermissionAsync(PermissionCreateRequest request) {
         URI route = URI.create(getBaseUrl() + "/role/permission/create");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, PermissionResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<Integer> deleteRolePermission(PermissionQueryRequest request) {
+    public CompletableFuture<ApiResponse<Integer>> deleteRolePermissionAsync(PermissionQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/role/permission/delete");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, Integer.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<List<PermissionResponse>> getRolePermission(PermissionQueryRequest request) {
+    public CompletableFuture<ApiResponse<List<PermissionResponse>>> getRolePermissionAsync(PermissionQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/role/permission/query");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, List.class, PermissionResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<AttributeResponse> createServerAttribute(AttributeCreateRequest request) {
+    public CompletableFuture<ApiResponse<AttributeResponse>> createServerAttributeAsync(AttributeCreateRequest request) {
         URI route = URI.create(getBaseUrl() + "/server/attribute/create");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, AttributeResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<Integer> deleteServerAttribute(AttributeQueryRequest request) {
+    public CompletableFuture<ApiResponse<Integer>> deleteServerAttributeAsync(AttributeQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/server/attribute/delete");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, Integer.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<List<AttributeResponse>> getServerAttribute(AttributeQueryRequest request) {
+    public CompletableFuture<ApiResponse<List<AttributeResponse>>> getServerAttributeAsync(AttributeQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/server/attribute/query");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, List.class, AttributeResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<StatResponse> createServerStat(StatCreateRequest request) {
+    public CompletableFuture<ApiResponse<StatResponse>> createServerStatAsync(StatCreateRequest request) {
         URI route = URI.create(getBaseUrl() + "/server/stat/create");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, StatResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<Integer> deleteServerStat(StatQueryRequest request) {
+    public CompletableFuture<ApiResponse<Integer>> deleteServerStatAsync(StatQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/server/stat/delete");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, Integer.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<List<StatResponse>> getServerStat(StatQueryRequest request) {
+    public CompletableFuture<ApiResponse<List<StatResponse>>> getServerStatAsync(StatQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/server/stat/query");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, List.class, StatResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<AttributeResponse> createUserAttribute(AttributeCreateRequest request) {
+    public CompletableFuture<ApiResponse<AttributeResponse>> createUserAttributeAsync(AttributeCreateRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/attribute/create");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, AttributeResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<Integer> deleteUserAttributes(AttributeQueryRequest request) {
+    public CompletableFuture<ApiResponse<Integer>> deleteUserAttributesAsync(AttributeQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/attribute/delete");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, Integer.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<List<AttributeResponse>> getUserAttributes(AttributeQueryRequest request) {
+    public CompletableFuture<ApiResponse<List<AttributeResponse>>> getUserAttributesAsync(AttributeQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/attribute/query");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, List.class, AttributeResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<PermissionResponse> createUserPermission(PermissionCreateRequest request) {
+    public CompletableFuture<ApiResponse<PermissionResponse>> createUserPermissionAsync(PermissionCreateRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/permission/create");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, PermissionResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<Integer> deleteUserPermission(PermissionQueryRequest request) {
+    public CompletableFuture<ApiResponse<Integer>> deleteUserPermissionAsync(PermissionQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/permission/delete");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, Integer.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<List<PermissionResponse>> getUserPermission(PermissionQueryRequest request) {
+    public CompletableFuture<ApiResponse<List<PermissionResponse>>> getUserPermissionAsync(PermissionQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/permission/query");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, List.class, PermissionResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<StatResponse> createUserStat(StatCreateRequest request) {
+    public CompletableFuture<ApiResponse<StatResponse>> createUserStatAsync(StatCreateRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/stat/create");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, StatResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<Integer> deleteUserStat(StatQueryRequest request) {
+    public CompletableFuture<ApiResponse<Integer>> deleteUserStatAsync(StatQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/stat/delete");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, Integer.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<List<StatResponse>> getUserStat(StatQueryRequest request) {
+    public CompletableFuture<ApiResponse<List<StatResponse>>> getUserStatAsync(StatQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/stat/query");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, List.class, StatResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<LogResponse> createUserLog(LogCreateRequest request) {
+    public CompletableFuture<ApiResponse<LogResponse>> createUserLogAsync(LogCreateRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/log/create");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, LogResponse.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<Integer> deleteUserLog(LogQueryRequest request) {
+    public CompletableFuture<ApiResponse<Integer>> deleteUserLogAsync(LogQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/log/delete");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, Integer.class).getType();
-        return post(request, route, responseType);
+        return postAsync(request, route, responseType);
     }
 
     @Override
-    public ApiResponse<List<LogResponse>> getUserLog(LogQueryRequest request) {
+    public CompletableFuture<ApiResponse<List<LogResponse>>> getUserLogAsync(LogQueryRequest request) {
         URI route = URI.create(getBaseUrl() + "/user/log/query");
         Type responseType = TypeToken.getParameterized(ApiResponse.class, List.class, LogResponse.class).getType();
-        return post(request, route, responseType);
-    }
+        return postAsync(request, route, responseType);    }
 }
